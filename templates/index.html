@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>인천항 선사 스케줄 vs 터미널 접안 스케줄</title>
+<style>
+  body { font-family: "Malgun Gothic", sans-serif; margin: 24px; background: #f5f6f8; color: #222; }
+  h1 { font-size: 20px; }
+  .toolbar { margin-bottom: 12px; display: flex; align-items: center; gap: 12px; }
+  .toolbar form { display: inline; }
+  button { background: #2c5cf0; color: #fff; border: none; padding: 8px 14px; border-radius: 4px; cursor: pointer; }
+  button:hover { background: #1e46c4; }
+  .note { color: #666; font-size: 13px; }
+  table { border-collapse: collapse; width: 100%; background: #fff; font-size: 13px; }
+  th, td { border: 1px solid #e0e0e0; padding: 6px 8px; text-align: left; white-space: nowrap; }
+  th { background: #f0f2f5; position: sticky; top: 0; }
+  tr.alert { background: #fff2f2; }
+  tr.alert td.diff { color: #d0342c; font-weight: bold; }
+  .badge { display: inline-block; padding: 1px 6px; border-radius: 10px; font-size: 11px; }
+  .badge.confirmed { background: #e3f6e3; color: #1a7d1a; }
+  .badge.estimated { background: #fff4d6; color: #8a6d00; }
+  .badge.none { background: #eee; color: #888; }
+  .manual-form input { width: 150px; padding: 3px; font-size: 12px; }
+  .manual-form button { padding: 3px 8px; font-size: 12px; }
+</style>
+</head>
+<body>
+  <h1>인천항 선사 스케줄 vs 터미널 접안 스케줄 비교</h1>
+  <div class="toolbar">
+    <form method="post" action="{{ url_for('refresh') }}">
+      <button type="submit">지금 새로고침 (iCON + 선사 스크래퍼)</button>
+    </form>
+    <span class="note">
+      터미널 접안 스케줄은 인천항만공사 iCON에서 자동 수집됩니다.
+      {% if carrier_adapter_count == 0 %}
+        선사 자동 스크래퍼는 아직 등록되지 않아, 아래에서 확인된 값을 수동 입력할 수 있습니다.
+      {% else %}
+        등록된 선사 스크래퍼: {{ carrier_adapter_count }}개
+      {% endif %}
+    </span>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>선박명</th>
+        <th>터미널</th>
+        <th>선석</th>
+        <th>항차</th>
+        <th>선사</th>
+        <th>터미널 접안예정(ETA)</th>
+        <th>터미널 출항예정(ETD)</th>
+        <th>선사 공지 ETA</th>
+        <th>차이(h)</th>
+        <th>수동 입력</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      <tr class="{{ 'alert' if r.diff_alert else '' }}">
+        <td>{{ r.vessel_name }}</td>
+        <td>{{ r.terminal }}</td>
+        <td>{{ r.berth }}</td>
+        <td>{{ r.voyage_code }}</td>
+        <td>{{ r.carrier }}</td>
+        <td>
+          {{ r.terminal_eta or '-' }}
+          {% if r.terminal_eta %}
+            <span class="badge {{ 'confirmed' if r.terminal_eta_confirmed else 'estimated' }}">
+              {{ '확정' if r.terminal_eta_confirmed else '예정' }}
+            </span>
+          {% endif %}
+        </td>
+        <td>{{ r.terminal_etd or '-' }}</td>
+        <td>
+          {% if r.has_carrier_data %}
+            {{ r.carrier_announced_eta or '-' }}
+            <span class="badge none">{{ r.carrier_announced_source }}</span>
+          {% else %}
+            <span class="badge none">미확인</span>
+          {% endif %}
+        </td>
+        <td class="diff">{{ r.diff_hours if r.diff_hours is not none else '-' }}</td>
+        <td>
+          <form class="manual-form" method="post" action="{{ url_for('manual_eta') }}">
+            <input type="hidden" name="carrier" value="{{ r.carrier }}">
+            <input type="hidden" name="vessel_name" value="{{ r.vessel_name }}">
+            <input type="hidden" name="voyage" value="{{ r.voyage_code }}">
+            <input type="datetime-local" name="eta" required>
+            <button type="submit">저장</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="10">데이터가 없습니다. "지금 새로고침"을 눌러주세요.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</body>
+</html>
