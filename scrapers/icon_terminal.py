@@ -12,12 +12,17 @@ https://scon.icpa.or.kr/main.do?menuKey=19
 from __future__ import annotations
 
 import re
+import time
 from dataclasses import dataclass, asdict
 from datetime import datetime, date
 from typing import Optional
 
 import requests
 from bs4 import BeautifulSoup
+
+# 정부기관 공개 서비스에 부담을 주지 않도록 페이지 간 짧게 쉬어간다.
+PAGE_FETCH_DELAY_SEC = 0.3
+MAX_PAGES = 50
 
 BASE_URL = "https://scon.icpa.or.kr"
 LIST_URL = f"{BASE_URL}/vescall/list.do"
@@ -105,30 +110,57 @@ def fetch_terminal_calls(
 ) -> list[TerminalCall]:
     """지정 기간의 인천항 선석배정현황(텍스트)을 모두 가져온다.
 
-    recordCountPerPage 를 크게 잡아 페이지네이션 없이 한번에 받는다.
+    이 메뉴는 recordCountPerPage 파라미터를 넘겨도 서버가 무시하고 20건씩 고정
+    페이지네이션하므로, 마지막 페이지 번호를 읽어 필요한 만큼 반복 조회한다.
     """
     sess = session or requests.Session()
-    payload = {
-        "currentPageNo": "1",
-        "menuKey": "19",
-        "recordCountPerPage": "2000",
-        "searchTermCd": TERMINAL_CODES.get(terminal, ""),
-        "searchStartDt": start.strftime("%Y-%m-%d"),
-        "searchEndDt": end.strftime("%Y-%m-%d"),
-    }
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
         "Referer": f"{BASE_URL}/main.do?menuKey=19",
     }
-    resp = sess.post(LIST_URL, data=payload, headers=headers, timeout=timeout)
-    resp.raise_for_status()
-    resp.encoding = "utf-8"
-    return _parse_table(resp.text)
+
+    def _fetch_page(page_no: int) -> str:
+        payload = {
+            "currentPageNo": str(page_no),
+            "menuKey": "19",
+            "recordCountPerPage": "20",
+            "searchTermCd": TERMINAL_CODES.get(terminal, ""),
+            "searchStartDt": start.strftime("%Y-%m-%d"),
+            "searchEndDt": end.strftime("%Y-%m-%d"),
+        }
+        resp = sess.post(LIST_URL, data=payload, headers=headers, timeout=timeout)
+        resp.raise_for_status()
+        resp.encoding = "utf-8"
+        return resp.text
+
+    first_html = _fetch_page(1)
+    calls = _parse_table(first_html)
+    last_page = min(_extract_last_page(first_html), MAX_PAGES)
+    for page_no in range(2, last_page + 1):
+        time.sleep(PAGE_FETCH_DELAY_SEC)
+        calls.extend(_parse_table(_fetch_page(page_no)))
+    return calls
+
+
+def _extract_last_page(html: str) -> int:
+    idx = html.find("마지막 페이지 이동")
+    if idx == -1:
+        return 1
+    window = html[max(0, idx - 200):idx]
+    matches = re.findall(r"cfnPageLink\((\d+)\)", window)
+    return int(matches[-1]) if matches else 1
 
 
 def _parse_table(html: str) -> list[TerminalCall]:
     soup = BeautifulSoup(html, "html.parser")
-    board = soup.select_one("div.table-board table")
+    # 페이지에는 "table-board" div가 여러 개 있다 (터미널별 공지사항 표 등).
+    # 원하는 선석배정현황 표는 caption으로 정확히 찾는다.
+    caption = None
+    for cap in soup.find_all("caption"):
+        if "선석배정현황" in cap.get_text():
+            caption = cap
+            break
+    board = caption.find_parent("table") if caption else None
     if board is None:
         return []
     rows = board.select("tbody > tr")
