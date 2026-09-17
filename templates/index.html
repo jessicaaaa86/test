@@ -2,14 +2,15 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<title>인천항 선사 스케줄 vs 터미널 접안 스케줄</title>
+<title>선사 스케줄 vs 터미널 접안 스케줄</title>
 <style>
   body { font-family: "Malgun Gothic", sans-serif; margin: 24px; background: #f5f6f8; color: #222; }
   h1 { font-size: 20px; }
-  .toolbar { margin-bottom: 12px; display: flex; align-items: center; gap: 12px; }
+  .toolbar { margin-bottom: 12px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
   .toolbar form { display: inline; }
   button { background: #2c5cf0; color: #fff; border: none; padding: 8px 14px; border-radius: 4px; cursor: pointer; }
   button:hover { background: #1e46c4; }
+  select { padding: 6px 10px; border-radius: 4px; border: 1px solid #ccc; }
   .note { color: #666; font-size: 13px; }
   table { border-collapse: collapse; width: 100%; background: #fff; font-size: 13px; }
   th, td { border: 1px solid #e0e0e0; padding: 6px 8px; text-align: left; white-space: nowrap; }
@@ -20,34 +21,42 @@
   .badge.confirmed { background: #e3f6e3; color: #1a7d1a; }
   .badge.estimated { background: #fff4d6; color: #8a6d00; }
   .badge.none { background: #eee; color: #888; }
+  .badge.icon { background: #e3ecfc; color: #1a4c9c; }
+  .badge.tradlinx { background: #f0e6fc; color: #6a1a9c; }
+  .badge.manual { background: #fce8e6; color: #a02c1a; }
   .manual-form input { width: 150px; padding: 3px; font-size: 12px; }
   .manual-form button { padding: 3px 8px; font-size: 12px; }
 </style>
 </head>
 <body>
-  <h1>인천항 선사 스케줄 vs 터미널 접안 스케줄 비교</h1>
+  <h1>선사 스케줄 vs 터미널 접안 스케줄 비교</h1>
   <div class="toolbar">
     <form method="post" action="{{ url_for('refresh') }}">
-      <button type="submit">지금 새로고침 (iCON + 선사 스크래퍼)</button>
+      <button type="submit">지금 새로고침 (iCON + Tradlinx)</button>
+    </form>
+    <form method="get" action="{{ url_for('dashboard') }}">
+      <select name="port" onchange="this.form.submit()">
+        <option value="">전체 항구</option>
+        {% for cd, nm in tracked_ports.items() %}
+        <option value="{{ cd }}" {{ 'selected' if selected_port == cd else '' }}>{{ nm }}</option>
+        {% endfor %}
+      </select>
     </form>
     <span class="note">
-      터미널 접안 스케줄은 인천항만공사 iCON에서 자동 수집됩니다.
-      {% if carrier_adapter_count == 0 %}
-        선사 자동 스크래퍼는 아직 등록되지 않아, 아래에서 확인된 값을 수동 입력할 수 있습니다.
-      {% else %}
-        등록된 선사 스크래퍼: {{ carrier_adapter_count }}개
-      {% endif %}
+      인천 터미널 접안 스케줄은 인천항만공사 iCON, 그 외 항구(부산 등)와 선사 공지 스케줄은
+      Tradlinx에서 자동 수집됩니다. 자동으로 못 찾은 선사 ETA는 표 오른쪽에서 수동 입력할 수 있습니다.
     </span>
   </div>
 
   <table>
     <thead>
       <tr>
+        <th>항구</th>
         <th>선박명</th>
         <th>터미널</th>
         <th>선석</th>
         <th>항차</th>
-        <th>선사</th>
+        <th>선사(터미널 기준)</th>
         <th>터미널 접안예정(ETA)</th>
         <th>터미널 출항예정(ETD)</th>
         <th>선사 공지 ETA</th>
@@ -58,8 +67,9 @@
     <tbody>
       {% for r in rows %}
       <tr class="{{ 'alert' if r.diff_alert else '' }}">
+        <td>{{ r.port_nm }}</td>
         <td>{{ r.vessel_name }}</td>
-        <td>{{ r.terminal }}</td>
+        <td>{{ r.terminal }} <span class="badge {{ 'icon' if r.terminal_source == 'ICON' else 'tradlinx' }}">{{ r.terminal_source }}</span></td>
         <td>{{ r.berth }}</td>
         <td>{{ r.voyage_code }}</td>
         <td>{{ r.carrier }}</td>
@@ -75,7 +85,10 @@
         <td>
           {% if r.has_carrier_data %}
             {{ r.carrier_announced_eta or '-' }}
-            <span class="badge none">{{ r.carrier_announced_source }}</span>
+            <br>
+            <span class="badge {{ 'manual' if r.carrier_announced_source == 'MANUAL' else 'tradlinx' }}">
+              {{ r.carrier_announced_by }} · {{ r.carrier_announced_source }}
+            </span>
           {% else %}
             <span class="badge none">미확인</span>
           {% endif %}
@@ -86,13 +99,14 @@
             <input type="hidden" name="carrier" value="{{ r.carrier }}">
             <input type="hidden" name="vessel_name" value="{{ r.vessel_name }}">
             <input type="hidden" name="voyage" value="{{ r.voyage_code }}">
+            <input type="hidden" name="port_cd" value="{{ r.port_cd }}">
             <input type="datetime-local" name="eta" required>
             <button type="submit">저장</button>
           </form>
         </td>
       </tr>
       {% else %}
-      <tr><td colspan="10">데이터가 없습니다. "지금 새로고침"을 눌러주세요.</td></tr>
+      <tr><td colspan="11">데이터가 없습니다. "지금 새로고침"을 눌러주세요.</td></tr>
       {% endfor %}
     </tbody>
   </table>
