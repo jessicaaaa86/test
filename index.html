@@ -1,0 +1,284 @@
+<title>PNS 로지스틱스</title>
+<style>
+  :root {
+    --ink: #16283b;
+    --ink-soft: #4a5b6d;
+    --line: #d8dee3;
+    --bg: #f6f4ef;
+    --surface: #ffffff;
+    --navy: #16283b;
+    --navy-deep: #0d1b2a;
+    --steel: #3b6a94;
+    --signal: #d9722c;
+    --signal-ink: #ffffff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ink: #e9edf1;
+      --ink-soft: #a8b6c3;
+      --line: #2b3a4a;
+      --bg: #0d1b2a;
+      --surface: #142639;
+      --navy: #142639;
+      --navy-deep: #0a141f;
+      --steel: #6ea3cf;
+      --signal: #e88a45;
+      --signal-ink: #16283b;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink: #e9edf1;
+    --ink-soft: #a8b6c3;
+    --line: #2b3a4a;
+    --bg: #0d1b2a;
+    --surface: #142639;
+    --navy: #142639;
+    --navy-deep: #0a141f;
+    --steel: #6ea3cf;
+    --signal: #e88a45;
+    --signal-ink: #16283b;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Public Sans", -apple-system, "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+    line-height: 1.6;
+    padding-inline: 20px;
+  }
+  h1, h2, h3 { font-family: "Archivo", "Malgun Gothic", sans-serif; text-wrap: balance; margin: 0; }
+  .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; }
+  a { color: inherit; }
+  .wrap { max-width: 1080px; margin-inline: auto; }
+
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding-block: 22px; border-bottom: 1px solid var(--line);
+    flex-wrap: wrap; gap: 12px;
+  }
+  .logo { display: flex; align-items: center; gap: 10px; font-family: "Archivo", sans-serif; font-weight: 700; font-size: 1.15rem; letter-spacing: -0.01em; }
+  .logo-mark {
+    width: 34px; height: 34px; border-radius: 7px; background: var(--navy);
+    display: grid; place-items: center; flex-shrink: 0;
+  }
+  .logo-mark svg { width: 20px; height: 20px; }
+  nav { display: flex; gap: 28px; font-size: 0.92rem; color: var(--ink-soft); flex-wrap: wrap; }
+  nav a { text-decoration: none; }
+  nav a:hover { color: var(--steel); }
+
+  .hero {
+    display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 48px;
+    padding-block: 64px 48px; align-items: center;
+  }
+  @media (max-width: 760px) { .hero { grid-template-columns: 1fr; padding-block: 40px 32px; } }
+  .eyebrow {
+    font-family: "IBM Plex Mono", monospace; font-size: 0.78rem; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--steel); margin-bottom: 14px; display: block;
+  }
+  .hero h1 { font-size: clamp(2rem, 4.2vw, 3.1rem); line-height: 1.14; letter-spacing: -0.01em; }
+  .hero p.lede { color: var(--ink-soft); font-size: 1.08rem; max-width: 46ch; margin-top: 18px; }
+  .cta-row { display: flex; gap: 12px; margin-top: 30px; flex-wrap: wrap; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px; padding: 13px 22px; border-radius: 5px;
+    font-size: 0.95rem; font-weight: 600; text-decoration: none; border: 1px solid transparent;
+    cursor: pointer;
+  }
+  .btn-primary { background: var(--signal); color: var(--signal-ink); }
+  .btn-ghost { border-color: var(--line); color: var(--ink); }
+
+  .route-card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+    padding: 26px; position: relative; overflow: hidden;
+  }
+  .route-card .route-line { display: flex; align-items: center; gap: 8px; margin-bottom: 22px; }
+  .route-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--steel); flex-shrink: 0; }
+  .route-dot.end { background: var(--signal); }
+  .route-track { flex: 1; height: 1px; background: var(--line); position: relative; }
+  .route-track::after {
+    content: ""; position: absolute; left: 0; top: -3px; width: 46%; height: 7px;
+    background: var(--steel); mask: linear-gradient(90deg, transparent, #000 30%, #000 70%, transparent);
+  }
+  .route-labels { display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--ink-soft); margin-bottom: 20px; }
+  .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .stat { border-top: 1px solid var(--line); padding-top: 10px; }
+  .stat b { display: block; font-family: "IBM Plex Mono", monospace; font-size: 1.35rem; color: var(--navy); }
+  :root[data-theme="dark"] .stat b, @media (prefers-color-scheme: dark) { }
+  .stat b { color: var(--ink); }
+  .stat span { font-size: 0.78rem; color: var(--ink-soft); }
+
+  section { padding-block: 52px; border-top: 1px solid var(--line); }
+  .section-head { display: flex; justify-content: space-between; align-items: end; gap: 20px; margin-bottom: 34px; flex-wrap: wrap; }
+  .section-head h2 { font-size: 1.7rem; letter-spacing: -0.01em; }
+  .section-head p { color: var(--ink-soft); font-size: 0.95rem; max-width: 40ch; margin: 0; }
+  .kicker { font-family: "IBM Plex Mono", monospace; font-size: 0.76rem; color: var(--steel); text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 10px; }
+
+  .services-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  @media (max-width: 900px) { .services-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 520px) { .services-grid { grid-template-columns: 1fr; } }
+  .service {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 24px 20px;
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  .service .num { font-family: "IBM Plex Mono", monospace; font-size: 0.78rem; color: var(--ink-soft); }
+  .service h3 { font-size: 1.05rem; }
+  .service p { font-size: 0.9rem; color: var(--ink-soft); margin: 0; }
+
+  .strip {
+    background: var(--navy); color: #eef2f6; border-radius: 12px; padding: 38px 32px;
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;
+  }
+  @media (max-width: 760px) { .strip { grid-template-columns: repeat(2, 1fr); } }
+  .strip div b { display: block; font-family: "IBM Plex Mono", monospace; font-size: 1.6rem; }
+  .strip div span { font-size: 0.82rem; opacity: 0.75; }
+
+  .about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 44px; align-items: start; }
+  @media (max-width: 760px) { .about-grid { grid-template-columns: 1fr; } }
+  .about-grid p { color: var(--ink-soft); }
+  .cert-list { list-style: none; margin: 18px 0 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+  .cert-list li { display: flex; gap: 10px; font-size: 0.92rem; color: var(--ink-soft); }
+  .cert-list li::before { content: "✓"; color: var(--steel); font-weight: 700; }
+
+  .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 640px) { .contact-grid { grid-template-columns: 1fr; } }
+  .contact-card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 22px;
+  }
+  .contact-card h3 { font-size: 0.95rem; margin-bottom: 8px; }
+  .contact-card p, .contact-card a { font-size: 0.92rem; color: var(--ink-soft); text-decoration: none; }
+
+  footer {
+    border-top: 1px solid var(--line); padding-block: 26px; display: flex; justify-content: space-between;
+    color: var(--ink-soft); font-size: 0.85rem; flex-wrap: wrap; gap: 10px;
+  }
+</style>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+
+<div class="wrap">
+  <header>
+    <div class="logo">
+      <span class="logo-mark">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 16.5V7.8L12 4l9 3.8v8.7L12 20 3 16.5Z" stroke="#eef2f6" stroke-width="1.6" stroke-linejoin="round"/>
+          <path d="M3 7.8 12 11.5m0 0 9-3.7M12 11.5V20" stroke="#eef2f6" stroke-width="1.6" stroke-linejoin="round"/>
+        </svg>
+      </span>
+      PNS 로지스틱스
+    </div>
+    <nav>
+      <a href="#services">서비스</a>
+      <a href="#about">회사소개</a>
+      <a href="#network">글로벌 네트워크</a>
+      <a href="#contact">문의하기</a>
+    </nav>
+  </header>
+
+  <section class="hero" style="border-top:none; padding-top:64px;">
+    <div>
+      <span class="eyebrow">International Freight Forwarding</span>
+      <h1>화물 하나에도<br>가장 빠른 항로를 찾습니다</h1>
+      <p class="lede">해상·항공 국제운송부터 수출입 통관, 창고 보관까지 — PNS 로지스틱스가 전 세계 130개 항로에서 화주의 화물을 책임지고 관리합니다.</p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="#contact">견적 문의하기</a>
+        <a class="btn btn-ghost" href="#services">서비스 살펴보기</a>
+      </div>
+    </div>
+    <div class="route-card">
+      <div class="route-labels"><span>BUSAN, KR</span><span>ROTTERDAM, NL</span></div>
+      <div class="route-line">
+        <span class="route-dot"></span>
+        <span class="route-track"></span>
+        <span class="route-dot end"></span>
+      </div>
+      <div class="stat-grid">
+        <div class="stat"><b>130+</b><span>서비스 항로</span></div>
+        <div class="stat"><b>48</b><span>협력 국가</span></div>
+        <div class="stat"><b>15yr</b><span>운영 경력</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="services">
+    <div class="section-head">
+      <div><span class="kicker">Services</span><h2>화물의 시작부터 도착까지</h2></div>
+      <p>해상·항공 운송과 통관, 보관을 하나의 창구에서 연결해 화주의 물류 리스크를 줄입니다.</p>
+    </div>
+    <div class="services-grid">
+      <div class="service">
+        <span class="num">01</span>
+        <h3>해상운송 (FCL·LCL)</h3>
+        <p>전 세계 주요 선사와의 계약 운임으로 컨테이너 단위(FCL)와 혼적(LCL) 운송을 모두 지원합니다.</p>
+      </div>
+      <div class="service">
+        <span class="num">02</span>
+        <h3>항공운송</h3>
+        <p>긴급 화물과 고가품에 최적화된 항공 스케줄로 리드타임을 최소화합니다.</p>
+      </div>
+      <div class="service">
+        <span class="num">03</span>
+        <h3>수출입 통관</h3>
+        <p>관세사와 연계한 서류 검토, HS코드 분류, 통관 대행을 원스톱으로 처리합니다.</p>
+      </div>
+      <div class="service">
+        <span class="num">04</span>
+        <h3>보세창고·내륙운송</h3>
+        <p>주요 항만 인근 보세창고 보관과 국내 배송까지 이어지는 라스트마일을 관리합니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="network">
+    <div class="strip">
+      <div><b>2,400+</b><span>연간 처리 TEU</span></div>
+      <div><b>48개국</b><span>파트너 네트워크</span></div>
+      <div><b>99.2%</b><span>정시 선적률</span></div>
+      <div><b>24/7</b><span>화물 트래킹 지원</span></div>
+    </div>
+  </section>
+
+  <section id="about">
+    <div class="section-head">
+      <div><span class="kicker">About</span><h2>화주의 입장에서 항로를 설계합니다</h2></div>
+    </div>
+    <div class="about-grid">
+      <div>
+        <p>PNS 로지스틱스는 2010년 설립 이래 중소 제조사부터 대형 화주까지, 각 화물의 특성에 맞는 최적의 운송 조합을 제안해온 국제물류주선업체입니다. 선사·항공사와의 직접 계약을 통해 안정적인 스페이스를 확보하고, 담당자 1인이 견적부터 도착까지 전 구간을 책임지는 전담 창구 체계를 운영합니다.</p>
+        <p>단순 운송 중개를 넘어, 물동량 변화와 성수기 운임 변동까지 고려한 연간 운송 계획을 함께 설계합니다.</p>
+      </div>
+      <ul class="cert-list">
+        <li>국제물류주선업 등록 (관세청)</li>
+        <li>보세운송업 면허 보유</li>
+        <li>주요 선사 2급 대리점 계약</li>
+        <li>위험물(DG) 화물 취급 인증</li>
+        <li>화물배상책임보험 가입</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="contact">
+    <div class="section-head">
+      <div><span class="kicker">Contact</span><h2>견적은 24시간 내 회신드립니다</h2></div>
+      <p>출발지·도착지, 화물 정보를 남겨주시면 담당 포워더가 직접 연락드립니다.</p>
+    </div>
+    <div class="contact-grid">
+      <div class="contact-card">
+        <h3>대표 문의</h3>
+        <p><a href="mailto:jessica@pnsnetworks.com">jessica@pnsnetworks.com</a></p>
+        <p>평일 09:00–18:00 (KST)</p>
+      </div>
+      <div class="contact-card">
+        <h3>본사</h3>
+        <p>부산광역시 동구 충장대로 20 (항만물류타워 7F)</p>
+        <p>서울사무소 · 인천공항 물류센터 동시 운영</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span>© 2026 PNS 로지스틱스. All rights reserved.</span>
+    <span class="mono">국제물류주선업 등록번호 제2010-000-00호</span>
+  </footer>
+</div>
